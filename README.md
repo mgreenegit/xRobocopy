@@ -74,8 +74,12 @@ Versions
 --------
 
 ### 1.0.0.0
-* Initial public release of xRobocopy module with following resources:
-	* xRobocopy
+ - Initial public release of xRobocopy module with following resources:
+    - xRobocopy
+ 
+### 1.1.0.0
+ - Updated xRobocopy resource to return error if copy operation returns error.
+ - Get function now returns properties that were provided as input when listing arguments, to make it possible to track how copies are being performed on a target node.
 
 Examples
 --------

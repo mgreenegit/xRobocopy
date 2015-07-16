@@ -13,15 +13,53 @@ function Get-TargetResource
         $Destination,
 
         [System.String]
-        $LogOutput
+        $Files,
+
+        [System.UInt32]
+        $Retry,
+
+        [System.UInt32]
+        $Wait,
+
+        [System.Boolean]
+        $SubdirectoriesIncludingEmpty,
+
+        [System.Boolean]
+        $Restartable,
+
+        [System.Boolean]
+        $MultiThreaded,
+
+        [System.String]
+        $ExcludeFiles,
+
+        [System.String]
+        $ExcludeDirs,
+
+        [System.String]
+        $LogOutput,
+
+        [System.Boolean]
+        $AppendLog,
+
+        [System.String]
+        $AdditionalArgs
     )
 
-    $LogOutputExists = Test-Path $PSBoundParameters.LogOutput
-
     $returnValue = @{
-        Source = if (test-path $Source){[System.String]$(ls $Source).psChildName};
-        Destination = if (test-path $Destination){[System.String]$(ls $Destination).psChildName};
-        LogOutput = if ($LogOutputExists -eq $true){[System.String]$PSBoundParameters.LogOutput}
+        Source = $Source
+        Destination = $Destination
+        Files = $Files
+        Retry = $Retry
+        Wait = $Wait
+        SubdirectoriesIncludingEmpty = $SubdirectoriesIncludingEmpty
+        Restartable = $Restartable
+        Multithreaded = $MultiThreaded
+        ExcludeFiles = $ExcludeFiles
+        ExcludeDirs = $ExcludeDirs
+        LogOutput = $LogOutput
+        AppendLog = $AppendLog
+        AdditionalArgs = $AdditionalArgs
     }
 
     $returnValue
@@ -62,6 +100,9 @@ function Set-TargetResource
         $ExcludeFiles,
 
         [System.String]
+        $ExcludeDirs,
+
+        [System.String]
         $LogOutput,
 
         [System.Boolean]
@@ -72,22 +113,22 @@ function Set-TargetResource
     )
 
     [string]$Arguments = ''
-    if ($Retry -ne '') {$Arguments += " /R:$PSBoundParameters:Retry"}
-    if ($Wait -ne '') {$Arguments += " /W:$PSBoundParameters:Wait"}
+    if ($Retry -ne '') {$Arguments += " /R:$Retry"}
+    if ($Wait -ne '') {$Arguments += " /W:$Wait"}
     if ($SubdirectoriesIncludingEmpty -ne '') {$Arguments += ' /E'}
     if ($Restartable -ne '') {$Arguments += ' /MT'}
-    if ($ExcludeFiles -ne '') {$Arguments += " /XF $PSBoundParameters:ExludeFiles"}
-    if ($ExcludeDirs -ne '') {$Arguments += " /XD $PSBoundParameters:ExcludeDirs"}
+    if ($ExcludeFiles -ne '') {$Arguments += " /XF $ExludeFiles"}
+    if ($ExcludeDirs -ne '') {$Arguments += " /XD $ExcludeDirs"}
     if ($LogOutput -ne '' -AND $AppendLog -eq $true) {
-        $Arguments += " /LOG+:$PSBoundParameters:LogOutput"
+        $Arguments += " /LOG+:$LogOutput"
         }
     if ($LogOutput -ne '' -AND $AppendLog -eq $false) {
-        $Arguments += " /LOG:$PSBoundParameters:LogOutput"
+        $Arguments += " /LOG:$LogOutput"
      }
-    if ($AdditionalArgs -ne $null) {$Arguments += " $PSBoundParameters:AdditionalArgs"}
+    if ($AdditionalArgs -ne $null) {$Arguments += " $AdditionalArgs"}
 
     try {
-        Write-Verbose "Executing Robocopy with arguements: $arguements"
+        Write-Verbose "Executing Robocopy with arguements: $Arguments"
         Invoke-Robocopy $Source $Destination $Arguments
         }
     catch {
@@ -129,6 +170,9 @@ function Test-TargetResource
 
         [System.String]
         $ExcludeFiles,
+
+        [System.String]
+        $ExcludeDirs,
 
         [System.String]
         $LogOutput,
@@ -184,9 +228,8 @@ param (
     $Arguments
 )
 
-    # This is a safe use of invoke-expression.  Input is only passed as parameters to Robocopy.exe, it cannot be executed directly
-    $output = Invoke-Expression "Robocopy.exe $Source $Destination $Arguments"
-
+    $output = & robocopy.exe $Source $Destination $Arguments.split(' ')
+    if ($output -in (0..1)) {Write-Error "The file copy operation returned error: $ouput"}
     $LASTEXITCODE
 }
  # Invoke-Robocopy -source C:\DSCTestMOF -destination C:\DSCTestMOF2 -Arguments '/E /MT'
